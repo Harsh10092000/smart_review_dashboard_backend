@@ -19,9 +19,8 @@ app.use(cors({
     'http://localhost:5173',
     'http://localhost:4177',
     'http://localhost:3000', // Website
-    'https://admin.landmarkplots.com',
-    'https://adminapi.landmarkplots.com',
-    'smartreviewpanel.writool.com' // <-- add production frontend
+    'https://smartreviewpanel.bizease.com/',
+    'https://smartreviewpanelapi.bizease.com/'
   ],
   credentials: true,
 }));
