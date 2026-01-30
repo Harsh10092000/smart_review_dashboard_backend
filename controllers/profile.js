@@ -114,6 +114,33 @@ const sendProfileResponse = (res, row) => {
     res.json({ success: true, profile });
 };
 
+// Check if subdomain exists
+export const checkSubdomain = async (req, res) => {
+    try {
+        const { subdomain } = req.params;
+        const userId = req.user?.id;
+
+        if (!subdomain) return res.status(400).json({ message: "Subdomain required" });
+
+        // SQL injection safe due to parametrization
+        // Check if subdomain exists AND belongs to a DIFFERENT user
+        const [rows] = await db.promise().query(
+            "SELECT id FROM business_profiles WHERE subdomain = ? AND user_id != ?",
+            [subdomain, userId]
+        );
+
+        if (rows.length > 0) {
+            return res.json({ available: false, message: "Subdomain is already taken" });
+        }
+
+        return res.json({ available: true, message: "Subdomain is available" });
+
+    } catch (error) {
+        console.error("Check subdomain error:", error);
+        res.status(500).json({ message: "Check failed" });
+    }
+};
+
 // Save/Update user's business profile
 export const saveProfile = async (req, res) => {
     try {
