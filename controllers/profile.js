@@ -150,11 +150,29 @@ export const saveProfile = async (req, res) => {
             return res.status(401).json({ message: "Unauthorized" });
         }
 
+        let profileData = req.body;
+        // If coming from FormData, the JSON data is in 'data' field
+        if (req.body.data) {
+            try {
+                profileData = JSON.parse(req.body.data);
+            } catch (error) {
+                console.error("JSON Parse error:", error);
+                return res.status(400).json({ message: "Invalid data format" });
+            }
+        }
+
+        // Handle File Upload
+        let logoUrl = profileData.logo;
+        if (req.file) {
+            // Store relative path so domain change doesn't break image
+            logoUrl = `/uploads/logos/${req.file.filename}`;
+        }
+
         const {
             businessName,
             businessType,
             slug,
-            logo,
+            // logo, // We use logoUrl
             theme,
             headerConfig,
             footerConfig,
@@ -172,7 +190,7 @@ export const saveProfile = async (req, res) => {
             description,
             keywords,
             subdomain
-        } = req.body;
+        } = profileData;
 
         if (!businessName) {
             return res.status(400).json({ message: "Business name is required" });
@@ -237,7 +255,7 @@ export const saveProfile = async (req, res) => {
                     businessName,
                     businessType || null,
                     finalSlug,
-                    logo || null,
+                    logoUrl || null,
                     JSON.stringify(theme || {}),
                     JSON.stringify(headerConfig || {}),
                     JSON.stringify(footerConfig || {}),
@@ -272,7 +290,7 @@ export const saveProfile = async (req, res) => {
                     businessName,
                     businessType || null,
                     finalSlug,
-                    logo || null,
+                    logoUrl || null,
                     JSON.stringify(theme || {}),
                     JSON.stringify(headerConfig || {}),
                     JSON.stringify(footerConfig || {}),
