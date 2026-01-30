@@ -25,10 +25,11 @@ export const saveQRConfig = async (req, res) => {
         const userId = req.user.id;
 
         // Check Plan Limit
-        const allowed = await checkLimit(userId, 'qr_generation');
-        if (!allowed) {
-            return res.status(403).json({ error: "QR Generation is not allowed in your current plan." });
-        }
+        // Check Plan Limit - REMOVED as per request (Always Allow)
+        // const allowed = await checkLimit(userId, 'qr_generation');
+        // if (!allowed) {
+        //     return res.status(403).json({ error: "QR Generation is not allowed in your current plan." });
+        // }
 
         const {
             url,

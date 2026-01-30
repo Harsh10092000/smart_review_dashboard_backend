@@ -20,7 +20,8 @@ app.use(cors({
     'http://localhost:4177',
     'http://localhost:3000', // Website
     'https://admin.landmarkplots.com',
-    'https://adminapi.landmarkplots.com' // <-- add production frontend
+    'https://adminapi.landmarkplots.com',
+    'smartreviewpanel.writool.com' // <-- add production frontend
   ],
   credentials: true,
 }));
@@ -44,6 +45,6 @@ app.use("/api/marketing", marketingRoutes);
 app.use("/api/users", authUsers);
 app.use("/api/subscription", authSubscription);
 
-app.listen(8010, () => {
+app.listen(8025, () => {
   console.log("App is running ");
 });
