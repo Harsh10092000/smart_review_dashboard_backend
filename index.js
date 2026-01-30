@@ -19,8 +19,8 @@ app.use(cors({
     'http://localhost:5173',
     'http://localhost:4177',
     'http://localhost:3000', // Website
-    'https://smartreviewpanel.bizease.com/',
-    'https://smartreviewpanelapi.bizease.com/'
+    'https://smartreviewpanel.bizease.com',
+    'https://smartreviewpanelapi.bizease.com'
   ],
   credentials: true,
 }));
