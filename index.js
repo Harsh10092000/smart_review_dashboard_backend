@@ -48,6 +48,6 @@ app.use("/api/marketing", marketingRoutes);
 app.use("/api/users", authUsers);
 app.use("/api/subscription", authSubscription);
 
-app.listen(8010, () => {
+app.listen(8025, () => {
   console.log("App is running ");
 });
