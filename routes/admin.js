@@ -29,6 +29,7 @@ import {
   updateSystemCoupon
 } from "../controllers/admin.js";
 import { deleteProperty } from "../controllers/admin.js";
+import { getUserSubscriptionDetails, updateUserSubscription } from "../controllers/subscription.js";
 import { checkCouponStatus } from "../middleware/checkcouponvalidity.js";
 
 const router = express.Router();
@@ -66,5 +67,9 @@ router.post("/createSystemCoupon", createSystemCoupon);
 router.put("/updateSystemCoupon", updateSystemCoupon);
 router.get("/fetchSystemCoupons", fetchSystemCoupons);
 router.delete("/deleteSystemCoupon/:id", deleteSystemCoupon);
+
+// SUBSCRIPTION MANAGEMENT (Admin)
+router.get("/subscription/:userId", getUserSubscriptionDetails);
+router.put("/subscription/update", updateUserSubscription);
 
 export default router;

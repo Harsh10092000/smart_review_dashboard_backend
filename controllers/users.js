@@ -4,9 +4,12 @@ import { db } from "../connect.js";
 export const getUsers = (req, res) => {
     const q = `
         SELECT u.id, u.name, u.email, u.phone, u.is_active, u.created_at, 
-               bp.business_name, bp.business_type, bp.city, bp.state, bp.slug, bp.subdomain, bp.qr_token, bp.address 
+               bp.business_name, bp.business_type, bp.city, bp.state, bp.slug, bp.subdomain, bp.qr_token, bp.address,
+               p.name as plan_name, us.status as sub_status, us.end_date as sub_end_date
         FROM users u 
         LEFT JOIN business_profiles bp ON u.id = bp.user_id 
+        LEFT JOIN user_subscriptions us ON u.id = us.user_id AND us.status = 'active'
+        LEFT JOIN plans p ON us.plan_id = p.id
         ORDER BY u.created_at DESC
     `;
 
