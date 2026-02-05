@@ -2,6 +2,7 @@ import { db } from "../connect.js";
 import { transporter } from "../nodemailer.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 bcrypt.hash('admin', 10, (err, hash) => {
   console.log(hash);
@@ -89,10 +90,22 @@ export const fetchAll = (req, res) => {
 
 export const fetchUsersList = (req, res) => {
   const q = `
-    SELECT u.*, p.name as plan_name, us.status as sub_status, us.end_date as sub_end_date
+    SELECT u.*, 
+           p.name as plan_name, 
+           us.status as sub_status, 
+           us.end_date as sub_end_date,
+           bp.business_name,
+           bp.business_type,
+           bp.address,
+           bp.city,
+           bp.state,
+           bp.slug,
+           bp.qr_token,
+           bp.subdomain
     FROM users u 
     LEFT JOIN user_subscriptions us ON u.id = us.user_id AND us.status = 'active' 
     LEFT JOIN plans p ON us.plan_id = p.id 
+    LEFT JOIN business_profiles bp ON u.id = bp.user_id
     ORDER BY u.id DESC
   `;
   db.query(q, (err, data) => {
@@ -519,4 +532,126 @@ export const deleteSystemCoupon = (req, res) => {
     if (err) return res.status(500).json(err);
     return res.status(200).json("Coupon deleted");
   });
+};
+
+// CREATE DEMO USER (Admin Only) with Full Profile
+export const createDemoUser = async (req, res) => {
+  try {
+    const { name, email, phone, password, profile } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Name, email, and password are required" });
+    }
+
+    // Check if email exists
+    const [existing] = await db.promise().query("SELECT id FROM users WHERE email = ?", [email]);
+    if (existing.length > 0) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const [userResult] = await db.promise().query(
+      "INSERT INTO users (name, email, phone, password, is_active, created_at) VALUES (?, ?, ?, ?, 1, NOW())",
+      [name, email, phone || null, hashedPassword]
+    );
+    const newUserId = userResult.insertId;
+
+    // Get Demo Plan ID
+    const [demo] = await db.promise().query("SELECT id FROM plans WHERE name = 'Demo Plan' LIMIT 1");
+    const demoPlanId = demo.length > 0 ? demo[0].id : 5; // Fallback to 5
+
+    // Calculate end date (2 days from now)
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 2);
+
+    // Assign Demo Plan
+    await db.promise().query(
+      "INSERT INTO user_subscriptions (user_id, plan_id, end_date, status, created_at) VALUES (?, ?, ?, 'active', NOW())",
+      [newUserId, demoPlanId, endDate]
+    );
+
+    // Create Business Profile if profile data provided
+    if (profile && profile.businessName) {
+      const promptConfig = JSON.stringify({
+        serviceType: profile.serviceType || "",
+        areas: profile.areas || "",
+        ownerName: profile.ownerNames?.[0] || "",
+        ownerNames: profile.ownerNames || []
+      });
+
+      const slug = profile.businessName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '') + "-" + newUserId;
+
+      const theme = JSON.stringify({
+        primaryColor: profile.primaryColor || "#2563eb",
+        borderRadius: "0.5rem",
+        font: "Inter"
+      });
+
+      const qrToken = crypto.randomBytes(75).toString('hex');
+
+      await db.promise().query(`
+        INSERT INTO business_profiles (
+          user_id, business_name, business_type, description, 
+          address, phone, email, website, theme,
+          language_pref, keywords, prompt_config, slug, qr_token, subdomain, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+      `, [
+        newUserId,
+        profile.businessName,
+        profile.businessType || "",
+        profile.description || "",
+        profile.address || "",
+        profile.phone || "",
+        profile.email || "",
+        profile.website || "",
+        theme,
+        (profile.languagePref || ["English"]).join(","),
+        Array.isArray(profile.keywords) ? profile.keywords.join(",") : (profile.keywords || ""),
+        promptConfig,
+        slug,
+        qrToken,
+        profile.subdomain || null
+      ]);
+
+      console.log(`[Admin] Business profile created for demo user ${newUserId}`);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Demo user created successfully",
+      user: { id: newUserId, name, email, phone },
+      credentials: { email, password } // Return plain password for admin to share
+    });
+  } catch (err) {
+    console.error("Create demo user error:", err);
+    return res.status(500).json({ message: "Failed to create demo user", error: err.message });
+  }
+};
+// DELETE USER
+export const deleteUser = async (req, res) => {
+  const userId = req.params.id;
+  try {
+    // 1. Delete Business Profile
+    await db.promise().query("DELETE FROM business_profiles WHERE user_id = ?", [userId]);
+
+    // 2. Delete User Subscription
+    await db.promise().query("DELETE FROM user_subscriptions WHERE user_id = ?", [userId]);
+
+    // 3. Delete from Admin Login (if applicable, though usually separate)
+    // await db.promise().query("DELETE FROM admin_login WHERE id = ?", [userId]); 
+
+    // 4. Delete User
+    await db.promise().query("DELETE FROM users WHERE id = ?", [userId]);
+
+    return res.status(200).json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    console.error("Delete user error:", err);
+    return res.status(500).json({ success: false, message: "Failed to delete user" });
+  }
 };

@@ -26,7 +26,9 @@ import {
   fetchSystemCoupons,
   deleteSystemCoupon,
   fetchUsersList,
-  updateSystemCoupon
+  updateSystemCoupon,
+  createDemoUser,
+  deleteUser
 } from "../controllers/admin.js";
 import { deleteProperty } from "../controllers/admin.js";
 import { getUserSubscriptionDetails, updateUserSubscription } from "../controllers/subscription.js";
@@ -71,5 +73,9 @@ router.delete("/deleteSystemCoupon/:id", deleteSystemCoupon);
 // SUBSCRIPTION MANAGEMENT (Admin)
 router.get("/subscription/:userId", getUserSubscriptionDetails);
 router.put("/subscription/update", updateUserSubscription);
+
+// DEMO USER
+router.post("/createDemoUser", createDemoUser);
+router.delete("/deleteUser/:id", deleteUser);
 
 export default router;
