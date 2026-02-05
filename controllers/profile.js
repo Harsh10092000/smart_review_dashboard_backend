@@ -39,7 +39,10 @@ export const getProfile = async (req, res) => {
             // camelCase conversion for legacy fields
             businessName: row.business_name,
             businessType: row.business_type,
-            googleMapsLink: row.google_maps_link
+            googleMapsLink: row.google_maps_link,
+            // Expose WhatsApp fields from footerConfig
+            whatsappNumber: (typeof row.footer_config === 'string' ? JSON.parse(row.footer_config) : row.footer_config)?.whatsappNumber,
+            whatsappMessage: (typeof row.footer_config === 'string' ? JSON.parse(row.footer_config) : row.footer_config)?.whatsappMessage
         };
 
         res.json({ profile });
@@ -108,7 +111,9 @@ const sendProfileResponse = (res, row) => {
         website: row.website,
         googleMapsLink: row.google_maps_link,
         description: row.description,
-        keywords: row.keywords
+        keywords: row.keywords,
+        whatsappNumber: (typeof row.footer_config === 'string' ? JSON.parse(row.footer_config) : row.footer_config)?.whatsappNumber,
+        whatsappMessage: (typeof row.footer_config === 'string' ? JSON.parse(row.footer_config) : row.footer_config)?.whatsappMessage
     };
 
     res.json({ success: true, profile });
@@ -189,7 +194,9 @@ export const saveProfile = async (req, res) => {
             googleMapsLink,
             description,
             keywords,
-            subdomain
+            subdomain,
+            whatsappNumber,
+            whatsappMessage
         } = profileData;
 
         if (!businessName) {
@@ -258,7 +265,7 @@ export const saveProfile = async (req, res) => {
                     logoUrl || null,
                     JSON.stringify(theme || {}),
                     JSON.stringify(headerConfig || {}),
-                    JSON.stringify(footerConfig || {}),
+                    JSON.stringify({ ...footerConfig, whatsappNumber, whatsappMessage } || {}),
                     JSON.stringify(platforms || []),
                     languagePref || 'English',
                     JSON.stringify(promptConfig || {}),
@@ -293,7 +300,7 @@ export const saveProfile = async (req, res) => {
                     logoUrl || null,
                     JSON.stringify(theme || {}),
                     JSON.stringify(headerConfig || {}),
-                    JSON.stringify(footerConfig || {}),
+                    JSON.stringify({ ...footerConfig, whatsappNumber, whatsappMessage } || {}), // Save WhatsApp in Footer Config
                     JSON.stringify(platforms || []),
                     languagePref || 'English',
                     JSON.stringify(promptConfig || {}),

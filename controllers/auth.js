@@ -89,17 +89,17 @@ export const registerUser = async (req, res) => {
 
                 const userId = result.insertId;
 
-                // Assign Default Free Plan
-                const freePlanQ = "SELECT id, duration_days FROM plans WHERE price = 0 AND is_active = TRUE LIMIT 1";
-                db.query(freePlanQ, (err, plans) => {
+                // Assign Default 1-Year Subscription
+                const defaultPlanQ = "SELECT id FROM plans WHERE is_active = TRUE ORDER BY price ASC LIMIT 1";
+                db.query(defaultPlanQ, (err, plans) => {
                     if (!err && plans.length > 0) {
                         const plan = plans[0];
                         const endDate = new Date();
-                        endDate.setDate(endDate.getDate() + plan.duration_days);
+                        endDate.setDate(endDate.getDate() + 365); // Always 1 year
 
                         const subQ = "INSERT INTO user_subscriptions (user_id, plan_id, end_date, status) VALUES (?, ?, ?, 'active')";
                         db.query(subQ, [userId, plan.id, endDate], (err) => {
-                            if (err) console.error("Failed to assign free plan:", err);
+                            if (err) console.error("Failed to assign subscription:", err);
                         });
                     }
                 });
