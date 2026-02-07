@@ -51,6 +51,6 @@ app.use("/api/subscription", authSubscription);
 import keywordsRoutes from "./routes/keywords.js";
 app.use("/api/keywords", keywordsRoutes);
 
-app.listen(8010, () => {
+app.listen(8025, () => {
   console.log("App is running ");
 });
