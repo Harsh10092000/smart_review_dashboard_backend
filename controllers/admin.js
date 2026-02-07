@@ -549,6 +549,17 @@ export const createDemoUser = async (req, res) => {
       return res.status(400).json({ message: "Email already exists" });
     }
 
+    // Check if subdomain is already taken
+    if (profile && profile.subdomain) {
+      const [subdomainExists] = await db.promise().query(
+        "SELECT id FROM business_profiles WHERE subdomain = ?",
+        [profile.subdomain]
+      );
+      if (subdomainExists.length > 0) {
+        return res.status(400).json({ message: "Subdomain is already taken. Please choose a different one." });
+      }
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -589,34 +600,59 @@ export const createDemoUser = async (req, res) => {
 
       const theme = JSON.stringify({
         primaryColor: profile.primaryColor || "#2563eb",
+        secondaryColor: profile.secondaryColor || "#1e40af",
         borderRadius: "0.5rem",
         font: "Inter"
       });
 
       const qrToken = crypto.randomBytes(75).toString('hex');
 
+      // Build header_config JSON
+      const headerConfig = JSON.stringify(profile.headerConfig || { links: [] });
+
+      // Build footer_config JSON (includes WhatsApp)
+      const footerConfig = JSON.stringify({
+        description: profile.footerConfig?.description || "",
+        links: profile.footerConfig?.links || [],
+        social: profile.footerConfig?.social || {},
+        whatsappNumber: profile.whatsappNumber || "",
+        whatsappMessage: profile.whatsappMessage || ""
+      });
+
+      // Build platforms JSON
+      const platforms = JSON.stringify(profile.platforms || []);
+
       await db.promise().query(`
         INSERT INTO business_profiles (
           user_id, business_name, business_type, description, 
-          address, phone, email, website, theme,
-          language_pref, keywords, prompt_config, slug, qr_token, subdomain, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+          address, city, state, pincode, phone, email, website, google_maps_link, theme,
+          language_pref, keywords, prompt_config, slug, qr_token, subdomain,
+          header_config, footer_config, platforms,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
       `, [
         newUserId,
         profile.businessName,
         profile.businessType || "",
         profile.description || "",
         profile.address || "",
+        profile.city || "",
+        profile.state || "",
+        profile.pincode || "",
         profile.phone || "",
         profile.email || "",
         profile.website || "",
+        profile.googleMapsLink || "",
         theme,
         (profile.languagePref || ["English"]).join(","),
         Array.isArray(profile.keywords) ? profile.keywords.join(",") : (profile.keywords || ""),
         promptConfig,
         slug,
         qrToken,
-        profile.subdomain || null
+        profile.subdomain || null,
+        headerConfig,
+        footerConfig,
+        platforms
       ]);
 
       console.log(`[Admin] Business profile created for demo user ${newUserId}`);

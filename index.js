@@ -48,6 +48,9 @@ app.use("/api/marketing", marketingRoutes);
 app.use("/api/users", authUsers);
 app.use("/api/subscription", authSubscription);
 
-app.listen(8025, () => {
+import keywordsRoutes from "./routes/keywords.js";
+app.use("/api/keywords", keywordsRoutes);
+
+app.listen(8010, () => {
   console.log("App is running ");
 });
