@@ -89,18 +89,20 @@ export const registerUser = async (req, res) => {
 
                 const userId = result.insertId;
 
-                // Assign Default 1-Year Subscription
-                const defaultPlanQ = "SELECT id FROM plans WHERE is_active = TRUE ORDER BY price ASC LIMIT 1";
-                db.query(defaultPlanQ, (err, plans) => {
+                // Assign Starter Plan (1-Year Subscription)
+                const starterPlanQ = "SELECT id FROM plans WHERE name = 'Starter Plan' AND is_active = TRUE LIMIT 1";
+                db.query(starterPlanQ, (err, plans) => {
                     if (!err && plans.length > 0) {
                         const plan = plans[0];
                         const endDate = new Date();
-                        endDate.setDate(endDate.getDate() + 365); // Always 1 year
+                        endDate.setDate(endDate.getDate() + 365); // 1 year
 
                         const subQ = "INSERT INTO user_subscriptions (user_id, plan_id, end_date, status) VALUES (?, ?, ?, 'active')";
                         db.query(subQ, [userId, plan.id, endDate], (err) => {
-                            if (err) console.error("Failed to assign subscription:", err);
+                            if (err) console.error("Failed to assign Starter Plan subscription:", err);
                         });
+                    } else {
+                        console.error("Starter Plan not found! Please ensure 'Starter Plan' exists in plans table.");
                     }
                 });
 
@@ -245,17 +247,23 @@ export const checkSession = (req, res) => {
 
         // Fetch fresh user data
         const table = decoded.type === "admin" ? "admins" : "users";
-        const q = `SELECT id, name, email FROM ${table} WHERE id = ? AND is_active = TRUE`;
+        // Only fetch role for admins as users table might not have it
+        const fields = decoded.type === "admin" ? "id, name, email, role" : "id, name, email";
+        const q = `SELECT ${fields} FROM ${table} WHERE id = ? AND is_active = TRUE`;
 
         db.query(q, [decoded.id], (err, data) => {
             if (err || data.length === 0) {
                 return res.status(401).json({ message: "Session invalid" });
             }
 
+            const user = data[0]; // database user
+            const role = user.role || decoded.type; // Fallback to decoded type if role not in query
+
             return res.status(200).json({
                 user: {
-                    ...data[0],
-                    type: decoded.type
+                    ...user,
+                    type: decoded.type,
+                    role: role
                 }
             });
         });
