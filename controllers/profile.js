@@ -278,7 +278,7 @@ export const saveProfile = async (req, res) => {
                     website || null,
                     googleMapsLink || null,
                     description || null,
-                    keywords || null,
+                    Array.isArray(keywords) ? keywords.join(', ') : (keywords || null),
                     subdomain || null,
                     qrToken,
                     userId
@@ -313,7 +313,7 @@ export const saveProfile = async (req, res) => {
                     website || null,
                     googleMapsLink || null,
                     description || null,
-                    keywords || null,
+                    Array.isArray(keywords) ? keywords.join(', ') : (keywords || null),
                     subdomain || null,
                     qrToken
                 ]
