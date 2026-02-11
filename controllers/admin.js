@@ -570,13 +570,14 @@ export const createDemoUser = async (req, res) => {
     );
     const newUserId = userResult.insertId;
 
-    // Get Demo Plan ID
-    const [demo] = await db.promise().query("SELECT id FROM plans WHERE name = 'Demo Plan' LIMIT 1");
+    // Get Demo Plan ID and duration
+    const [demo] = await db.promise().query("SELECT id, duration_days FROM plans WHERE name = 'Demo Plan' LIMIT 1");
     const demoPlanId = demo.length > 0 ? demo[0].id : 5; // Fallback to 5
+    const demoDays = demo.length > 0 && demo[0].duration_days ? demo[0].duration_days : 2; // Fallback to 2 days
 
-    // Calculate end date (2 days from now)
+    // Calculate end date using plan's duration_days
     const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 2);
+    endDate.setDate(endDate.getDate() + demoDays);
 
     // Assign Demo Plan
     await db.promise().query(

@@ -1,5 +1,6 @@
 import { db } from "../connect.js";
 import crypto from 'crypto';
+import { checkLimit } from "./subscription.js";
 
 // Helper: Generate slug from name
 const generateSlug = (name) => {
@@ -164,6 +165,27 @@ export const saveProfile = async (req, res) => {
                 console.error("JSON Parse error:", error);
                 return res.status(400).json({ message: "Invalid data format" });
             }
+        }
+
+        // --- PLAN LIMIT ENFORCEMENT ---
+        // Check platform limit
+        const submittedPlatforms = profileData.platforms || [];
+        const maxPlatforms = await checkLimit(userId, 'platform_limit');
+        if (maxPlatforms !== null && maxPlatforms > 0 && submittedPlatforms.length > maxPlatforms) {
+            return res.status(403).json({ message: `Platform limit reached. Your plan allows up to ${maxPlatforms} platform(s).` });
+        }
+
+        // Check keyword limit
+        const submittedKeywords = profileData.keywords;
+        let keywordCount = 0;
+        if (Array.isArray(submittedKeywords)) {
+            keywordCount = submittedKeywords.length;
+        } else if (typeof submittedKeywords === 'string' && submittedKeywords.trim()) {
+            keywordCount = submittedKeywords.split(',').map(k => k.trim()).filter(k => k).length;
+        }
+        const maxKeywords = await checkLimit(userId, 'keyword_limit');
+        if (maxKeywords !== null && maxKeywords > 0 && keywordCount > maxKeywords) {
+            return res.status(403).json({ message: `Keyword limit reached. Your plan allows up to ${maxKeywords} keyword(s).` });
         }
 
         // Handle File Upload
