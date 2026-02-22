@@ -33,6 +33,8 @@ import {
 import { deleteProperty } from "../controllers/admin.js";
 import { getUserSubscriptionDetails, updateUserSubscription } from "../controllers/subscription.js";
 import { checkCouponStatus } from "../middleware/checkcouponvalidity.js";
+import { adminUploadImage } from "../controllers/images.js";
+import { uploadReviewImage } from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -77,5 +79,8 @@ router.put("/subscription/update", updateUserSubscription);
 // DEMO USER
 router.post("/createDemoUser", createDemoUser);
 router.delete("/deleteUser/:id", deleteUser);
+
+// ADMIN: Upload review image for a specific user
+router.post("/users/:userId/images/upload", uploadReviewImage.single('image'), adminUploadImage);
 
 export default router;

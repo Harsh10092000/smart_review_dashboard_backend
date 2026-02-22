@@ -30,7 +30,11 @@ export const db = mysql.createPool({
   password: "2NeB3$eX&",
   database: "u706648698_review_gen_db",
   waitForConnections: true,
-  connectionLimit: 10000
+  connectionLimit: 20,
+  queueLimit: 0,
+  connectTimeout: 30000,       // 30s timeout on new connections
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000 // send keep-alive ping every 10s
 });
 
 
