@@ -34,7 +34,11 @@ app.use((req, res, next) => {
 //   origin: 'http://dashboard.example.com',
 //   credentials: true,
 // }));
-app.use(express.static("./public"));
+app.use(express.static("./public", {
+  setHeaders: (res, path, stat) => {
+    res.set('Access-Control-Allow-Origin', '*');
+  }
+}));
 app.use("/api/auth", authAuth);
 app.use("/api/profile", authProfile);
 app.use("/api/pro", authProperty);
