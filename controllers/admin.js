@@ -692,3 +692,62 @@ export const deleteUser = async (req, res) => {
     return res.status(500).json({ success: false, message: "Failed to delete user" });
   }
 };
+
+// ADMIN: Get a specific user's public profile for QR Generation
+export const getProfileById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: "UserId is required" });
+    }
+
+    const [rows] = await db.promise().query(
+      "SELECT * FROM business_profiles WHERE user_id = ?",
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.json({ profile: null });
+    }
+
+    const row = rows[0];
+    const profile = {
+      ...row,
+      theme: typeof row.theme === 'string' ? JSON.parse(row.theme) : row.theme,
+      headerConfig: typeof row.header_config === 'string' ? JSON.parse(row.header_config) : row.header_config,
+      footerConfig: typeof row.footer_config === 'string' ? JSON.parse(row.footer_config) : row.footer_config,
+      platforms: typeof row.platforms === 'string' ? JSON.parse(row.platforms) : row.platforms,
+      promptConfig: typeof row.prompt_config === 'string' ? JSON.parse(row.prompt_config) : row.prompt_config,
+      businessName: row.business_name,
+      businessType: row.business_type,
+      googleMapsLink: row.google_maps_link,
+      whatsappNumber: (typeof row.footer_config === 'string' ? JSON.parse(row.footer_config) : row.footer_config)?.whatsappNumber,
+      whatsappMessage: (typeof row.footer_config === 'string' ? JSON.parse(row.footer_config) : row.footer_config)?.whatsappMessage
+    };
+
+    res.json({ profile });
+  } catch (error) {
+    console.error("Get admin profile error:", error);
+    res.status(500).json({ message: "Failed to fetch profile" });
+  }
+};
+
+// ADMIN: Get a specific user's QR config
+export const getQRConfigById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const q = "SELECT * FROM qr_configurations WHERE user_id = ?";
+
+    const [rows] = await db.promise().query(q, [userId]);
+
+    if (rows.length === 0) {
+      return res.status(200).json({ config: null });
+    }
+
+    return res.status(200).json({ config: rows[0] });
+  } catch (err) {
+    console.error("Get admin QR config error:", err);
+    res.status(500).json(err);
+  }
+};

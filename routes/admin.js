@@ -28,7 +28,9 @@ import {
   fetchUsersList,
   updateSystemCoupon,
   createDemoUser,
-  deleteUser
+  deleteUser,
+  getProfileById,
+  getQRConfigById
 } from "../controllers/admin.js";
 import { deleteProperty } from "../controllers/admin.js";
 import { getUserSubscriptionDetails, updateUserSubscription } from "../controllers/subscription.js";
@@ -82,5 +84,9 @@ router.delete("/deleteUser/:id", deleteUser);
 
 // ADMIN: Upload review image for a specific user
 router.post("/users/:userId/images/upload", uploadReviewImage.single('image'), adminUploadImage);
+
+// ADMIN: Get Profile and QR config for a specific user
+router.get("/profile/:userId", getProfileById);
+router.get("/marketing/qr/:userId", getQRConfigById);
 
 export default router;
